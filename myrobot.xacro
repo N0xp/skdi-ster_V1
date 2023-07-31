@@ -1,0 +1,461 @@
+<?xml version='1.0'?>
+
+<robot name="skid_steer_bot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Scale the robot size to fit the environment -->
+  <xacro:property name="scale" value="1.0" />
+
+  <!-- Length along X-axis, Width along Y-axis, Height along Z-axis -->
+  <xacro:property name="mower_width" value="${scale * 0.318}" />
+  <xacro:property name="mower_length" value="${scale * 0.19}" />
+  <xacro:property name="mower_height" value="${scale * 0.084}" />
+  <xacro:property name="mower_mass" value="${scale * 10}" />
+
+  <xacro:property name="base_x_offset" value="0" />
+
+  <!-- inertia = 1/12*m(h^2+d^2) -->
+  <xacro:property name="height_2" value="${mower_height * mower_height}" />
+  <xacro:property name="width_2" value="${mower_width * mower_width}" />
+  <xacro:property name="length_2" value="${mower_length * mower_length}" />
+  <xacro:property name="mower_inertia_xx" value="${mower_mass/12.0 * (height_2 + width_2)}" />
+  <xacro:property name="mower_inertia_yy" value="${mower_mass/12.0 * (height_2 + length_2)}" />
+  <xacro:property name="mower_inertia_zz" value="${mower_mass/12.0 * (width_2 + length_2)}" />
+  <xacro:property name="mower_i_x_pos" value="${base_x_offset}" />
+  <xacro:property name="mower_i_z_pos" value="${mower_height/3.0}" />
+
+  <xacro:property name="mower_frame_width" value="${mower_width - 2.1 * wheel_length}" />
+  <xacro:property name="mower_frame_length" value="${mower_length*1.2}" />
+  <xacro:property name="mower_frame_height" value="${mower_height/4.0}" />
+
+  <xacro:property name="hardware_width" value="${mower_width/2.0}" />
+  <xacro:property name="hardware_length" value="${mower_length/2.0}" />
+  <xacro:property name="hardware_height" value="${mower_height/2.0}" />
+  <xacro:property name="hardware_z_offset" value="${hardware_height/2.0}" />
+
+  <xacro:property name="wheel_length" value="${scale * 0.045}" />
+  <xacro:property name="wheel_radius" value="${scale * 0.055}" />
+  <xacro:property name="wheel_mass" value="${scale * 1}" />
+  <xacro:property name="wheel_inertia" value="${scale * 1e-3}" />
+  <xacro:property name="wheel_x_offset" value="${base_x_offset + mower_length/2.0}" />
+  <xacro:property name="wheel_y_offset" value="${mower_width/2.0 - wheel_length/2.0}" />
+
+  <xacro:property name="Imu_width" value="0.05" />
+  <xacro:property name="Imu_length" value="0.05" />
+  <xacro:property name="Imu_height" value="0.05" />
+  <xacro:property name="Imu_x_offset" value="${hardware_length/2.0 + base_x_offset - Imu_length/2.0 + 0.001}" />
+  <xacro:property name="Imu_z_offset" value="${hardware_height - Imu_height/2.0 + 0.001}" />
+
+  <xacro:property name="laser_width" value="0.1" />
+  <xacro:property name="laser_length" value="0.1" />
+  <xacro:property name="laser_height" value="0.1" />
+  <xacro:property name="laser_x_offset" value="${base_x_offset -0.06}" />
+  <xacro:property name="laser_z_offset" value="${hardware_height}" />
+
+  <xacro:property name="wheel_kp" value="1000000.0" />
+  <xacro:property name="wheel_kd" value="100.0" />
+  <xacro:property name="wheel_mu1" value="1" />
+  <xacro:property name="wheel_mu2" value="1" />
+  <xacro:property name="wheel_slip1" value="0.5" />
+  <xacro:property name="wheel_slip2" value="0" />
+
+  <link name="base_footprint"></link>
+
+  <link name='base_link'>
+    <inertial>
+      <mass value="${mower_mass}"/>
+      <origin xyz="${mower_i_x_pos} 0 ${mower_i_z_pos}" rpy=" 0 0 0"/>
+      <inertia
+          ixx="${mower_inertia_xx}" ixy="0" ixz="0"
+          iyy="${mower_inertia_yy}" iyz="0"
+          izz="${mower_inertia_zz}" />
+    </inertial>
+
+    <collision>
+      <origin xyz="${base_x_offset} 0 0" rpy=" 0 0 0"/>
+      <geometry>
+        <box size="${mower_frame_length} ${mower_frame_width} ${mower_frame_height}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="${base_x_offset} 0 0" rpy=" 0 0 0"/>
+      <geometry>
+        <box size="${mower_frame_length} ${mower_frame_width} ${mower_frame_height}"/>
+      </geometry>
+    </visual>
+
+    <!-- blade frame -->
+    <!-- <collision>
+      <origin xyz="${base_x_offset} 0 0" rpy=" 0 0 0"/>
+      <geometry>
+        <cylinder radius="${mower_width/2.0}" length="${mower_frame_height}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="${base_x_offset} 0 0" rpy=" 0 0 0"/>
+      <geometry>
+        <cylinder radius="${mower_width/2.0}" length="${mower_frame_height}"/>
+      </geometry>
+    </visual> -->
+
+    <!-- hardware frame -->
+    <collision>
+      <origin xyz="${base_x_offset} 0 ${hardware_z_offset}" rpy=" 0 0 0"/>
+      <geometry>
+        <box size="${hardware_length} ${hardware_width} ${hardware_height}"/>
+      </geometry>
+    </collision>
+    <!-- <visual>
+      <origin xyz="${base_x_offset} 0 ${hardware_z_offset}" rpy=" 0 0 0"/>
+      <geometry>
+        <box size="${hardware_length} ${hardware_width} ${hardware_height}"/>
+      </geometry>
+    </visual> -->
+
+  </link>
+
+  <joint name="robot_footprint_joint" type="fixed">
+    <origin xyz="0 0 0.06" rpy="0 0 0" />
+    <parent link="base_footprint" />
+    <child link="base_link" />
+  </joint>
+  <link name="left_back_wheel">
+    <inertial>
+      <mass value="${wheel_mass}"/>
+      <origin xyz="0.0 0 0" rpy=" 0 1.5707 1.5707"/>
+      <inertia
+        ixx="${wheel_inertia}" ixy="0" ixz="0"
+        iyy="${wheel_inertia}" iyz="0"
+        izz="${wheel_inertia}" />
+    </inertial>
+    <collision name="left_back_wheel_collision">
+      <origin xyz="0 0 0" rpy=" 0 1.5707 1.5707"/>
+      <geometry>
+        <cylinder length="${wheel_length}" radius="${wheel_radius}"/>
+      </geometry>
+      <surface>
+        <friction>
+          <fdir1>1 0 0</fdir1>
+          <kp>${wheel_kp}</kp> <!-- kp and kd for rubber -->
+          <kd>${wheel_kd}</kd>
+          <mu>${wheel_mu1}</mu>
+          <mu2>${wheel_mu2}</mu2>
+          <slip1>${wheel_slip1}</slip1>
+          <slip2>${wheel_slip2}</slip2>
+        </friction>
+      </surface>
+    </collision>
+    <visual name="left_back_wheel_visual">
+      <origin xyz="0 0 0" rpy=" 0 1.5707 1.5707"/>
+      <geometry>
+        <cylinder length="${wheel_length}" radius="${wheel_radius}"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint type="continuous" name="left_back_wheel_joint">
+    <origin xyz="-${wheel_x_offset} ${wheel_y_offset} 0" rpy="0 0 0"/>
+    <child link="left_back_wheel"/>
+    <parent link="base_link"/>
+    <axis xyz="0 1 0" rpy="0 0 0"/>
+    <limit effort="10000" velocity="1000"/>
+    <joint_properties damping="1.0" friction="1.0"/>
+  </joint>
+
+    <!-- right back wheel -->
+    <joint type="continuous" name="right_back_wheel_joint">
+      <origin xyz="-${wheel_x_offset} -${wheel_y_offset} 0" rpy="0 0 0"/>
+      <child link="right_back_wheel"/>
+      <parent link="base_link"/>
+      <axis xyz="0 1 0" rpy="0 0 0"/>
+      <limit effort="10000" velocity="1000"/>
+      <joint_properties damping="1.0" friction="1.0"/>
+    </joint>
+  
+    <link name="right_back_wheel">
+      <inertial>
+        <mass value="${wheel_mass}"/>
+        <origin xyz="0.0 0 0" rpy=" 0 1.5707 1.5707"/>
+        <inertia
+            ixx="${wheel_inertia}" ixy="0" ixz="0"
+            iyy="${wheel_inertia}" iyz="0"
+            izz="${wheel_inertia}" />
+      </inertial>
+      <collision name="right_back_wheel_collision">
+        <origin xyz="0 0 0" rpy=" 0 1.5707 1.5707"/>
+        <geometry>
+          <cylinder length="${wheel_length}" radius="${wheel_radius}"/>
+        </geometry>
+        <surface>
+          <friction>
+            <fdir1>1 0 0</fdir1>
+            <kp>${wheel_kp}</kp> <!-- kp and kd for rubber -->
+            <kd>${wheel_kd}</kd>
+            <mu>${wheel_mu1}</mu>
+            <mu2>${wheel_mu2}</mu2>
+            <slip1>${wheel_slip1}</slip1>
+            <slip2>${wheel_slip2}</slip2>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="right_back_wheel_visual">
+        <origin xyz="0 0 0" rpy=" 0 1.5707 1.5707"/>
+        <geometry>
+          <cylinder length="${wheel_length}" radius="${wheel_radius}"/>
+        </geometry>
+      </visual>
+    </link>
+
+      <!-- left front wheel -->
+  <joint type="continuous" name="left_front_wheel_joint">
+    <origin xyz="${wheel_x_offset} ${wheel_y_offset} 0" rpy="0 0 0"/>
+    <child link="left_front_wheel"/>
+    <parent link="base_link"/>
+    <axis xyz="0 1 0" rpy="0 0 0"/>
+    <limit effort="10000" velocity="1000"/>
+    <joint_properties damping="1.0" friction="1.0"/>
+  </joint>
+
+  <link name="left_front_wheel">
+    <inertial>
+      <mass value="${wheel_mass}"/>
+      <origin xyz="0.0 0 0" rpy=" 0 1.5707 1.5707"/>
+      <inertia
+        ixx="${wheel_inertia}" ixy="0" ixz="0"
+        iyy="${wheel_inertia}" iyz="0"
+        izz="${wheel_inertia}" />
+    </inertial>
+    <collision name="left_front_wheel_collision">
+      <origin xyz="0 0 0" rpy=" 0 1.5707 1.5707"/>
+      <geometry>
+        <cylinder length="${wheel_length}" radius="${wheel_radius}"/>
+      </geometry>
+      <surface>
+        <friction>
+          <fdir1>1 0 0</fdir1>
+          <kp>${wheel_kp}</kp> <!-- kp and kd for rubber -->
+          <kd>${wheel_kd}</kd>
+          <mu>${wheel_mu1}</mu>
+          <mu2>${wheel_mu2}</mu2>
+          <slip1>${wheel_slip1}</slip1>
+          <slip2>${wheel_slip2}</slip2>
+        </friction>
+      </surface>
+    </collision>
+    <visual name="left_front_wheel_visual">
+      <origin xyz="0 0 0" rpy=" 0 1.5707 1.5707"/>
+      <geometry>
+        <cylinder length="${wheel_length}" radius="${wheel_radius}"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <!-- right front wheel -->
+  <joint type="continuous" name="right_front_wheel_joint">
+    <origin xyz="${wheel_x_offset} -${wheel_y_offset} 0" rpy="0 0 0"/>
+    <child link="right_front_wheel"/>
+    <parent link="base_link"/>
+    <axis xyz="0 1 0" rpy="0 0 0"/>
+    <limit effort="10000" velocity="1000"/>
+    <joint_properties damping="1.0" friction="1.0"/>
+  </joint>
+
+  <link name="right_front_wheel">
+    <inertial>
+      <mass value="${wheel_mass}"/>
+      <origin xyz="0.0 0 0" rpy=" 0 1.5707 1.5707"/>
+      <inertia
+          ixx="${wheel_inertia}" ixy="0" ixz="0"
+          iyy="${wheel_inertia}" iyz="0"
+          izz="${wheel_inertia}" />
+    </inertial>
+    <collision name="right_front_wheel_collision">
+      <origin xyz="0 0 0" rpy=" 0 1.5707 1.5707"/>
+      <geometry>
+        <cylinder length="${wheel_length}" radius="${wheel_radius}"/>
+      </geometry>
+      <surface>
+        <friction>
+          <fdir1>1 0 0</fdir1>
+          <kp>${wheel_kp}</kp> <!-- kp and kd for rubber -->
+          <kd>${wheel_kd}</kd>
+          <mu>${wheel_mu1}</mu>
+          <mu2>${wheel_mu2}</mu2>
+          <slip1>${wheel_slip1}</slip1>
+          <slip2>${wheel_slip2}</slip2>
+        </friction>
+      </surface>
+    </collision>
+    <visual name="right_front_wheel_visual">
+      <origin xyz="0 0 0" rpy=" 0 1.5707 1.5707"/>
+      <geometry>
+        <cylinder length="${wheel_length}" radius="${wheel_radius}"/>
+      </geometry>
+    </visual>
+  </link>
+
+
+  <link name='Imu_link'>
+    <inertial>
+      <mass value="0.1"/>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/>
+      <inertia
+          ixx="1e-6" ixy="0" ixz="0"
+          iyy="1e-6" iyz="0"
+          izz="1e-6"/>
+    </inertial>
+    <collision name='Imu_collision'>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/>
+      <geometry>
+        <box size="${Imu_length} ${Imu_width} ${Imu_height}"/>
+      </geometry>
+    </collision>
+    <visual name='Imu_visual'>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/>
+      <geometry>
+        <box size="${Imu_length} ${Imu_width} ${Imu_height}"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint type="fixed" name="Imu_joint">
+    <origin xyz="${Imu_x_offset} 0 ${Imu_z_offset}" rpy="0 0 0"/>
+    <child link="Imu_link"/>
+    <parent link="base_link"/>
+    <axis xyz="0 1 0" rpy="0 0 0"/>
+    <limit effort="10000" velocity="1000"/>
+    <joint_properties damping="1.0" friction="1.0"/>
+  </joint>
+
+  <link name='hokuyo'>
+    <pose>0 0 0 0 0 0</pose>
+    <inertial>
+      <mass value="0.1"/>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/>
+      <inertia
+          ixx="1e-6" ixy="0" ixz="0"
+          iyy="1e-6" iyz="0"
+          izz="1e-6" />
+    </inertial>
+    <collision name='hokuyo_collision'>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/>
+      <geometry>
+        <box size="${laser_length} ${laser_width} ${laser_height}"/>
+      </geometry>
+    </collision>
+    <visual name='hokuyo_visual'>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/>
+      <geometry>
+        <box size="0.06 0.06 0.06"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint type="fixed" name="hokuyo_joint">
+    <origin xyz="${laser_x_offset} 0 ${laser_z_offset}" rpy="0 0 0"/>
+    <child link="hokuyo"/>
+    <parent link="base_link"/>
+    <axis xyz="0 1 0" rpy="0 0 0"/>
+    <limit effort="10000" velocity="1000"/>
+    <joint_properties damping="1.0" friction="1.0"/>
+  </joint>
+
+  <!-- right wheels transmission -->
+  <transmission name="transmission_right_front_wheel">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_front_wheel_joint">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="right_front_wheel">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  
+  <transmission name="transmission_right_back_wheel">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_back_wheel_joint">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="right_back_wheel">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+    <!-- left wheels transmission -->
+    <transmission name="transmission_left_front_wheel">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="left_front_wheel_joint">
+          <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="left_front_wheel">
+          <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+          <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+    
+    <transmission name="transmission_left_back_wheel">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="left_back_wheel_joint">
+          <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="left_back_wheel">
+          <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+          <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <!-- Rear disks transmission -->
+<transmission name="transmission_rear_left_disk">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="left_back_wheel_joint">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="left_back_wheel">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="transmission_rear_right_disk">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="right_back_wheel_joint">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="right_back_wheel">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+ <!-- Front disks transmission -->
+ <transmission name="transmission_front_left_disk">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="joint_front_left_disk">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="motor_front_left_disk">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="transmission_front_right_disk">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="joint_front_right_disk">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="motor_front_right_disk">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/skid_steer_robot</robotNamespace>
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+    </plugin>
+  </gazebo>
+
+
+
+</robot>
